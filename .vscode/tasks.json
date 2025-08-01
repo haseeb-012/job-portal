@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "sentry:sourcemaps",
+			"path": "server",
+			"problemMatcher": [],
+			"label": "npm: sentry:sourcemaps - server",
+			"detail": "sentry-cli sourcemaps inject --org haseeb-17 --project ai-career ./server && sentry-cli sourcemaps upload --org haseeb-17 --project ai-career ./server"
+		}
+	]
+}
