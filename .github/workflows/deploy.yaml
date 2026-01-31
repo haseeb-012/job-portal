@@ -21,13 +21,17 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -e
+            set -x
+
+            # Load NVM
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
             # -------------------------
             # Client
             # -------------------------
             cd /var/www/job-portal/client
-            git fetch origin
-            git reset --hard origin/main
             npm ci
             npm run build
 
@@ -35,8 +39,6 @@ jobs:
             # Server
             # -------------------------
             cd /var/www/job-portal/server
-            git fetch origin
-            git reset --hard origin/main
             npm ci --production
 
             # -------------------------
