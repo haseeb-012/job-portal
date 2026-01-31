@@ -17,7 +17,7 @@ jobs:
       # -------------------------
       - name: Deploy Server
         run: |
-          ssh -p 443 deploy@${{ secrets.SERVER_HOST }} << 'EOF'
+          ssh -p 22 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           set -ex
 
           # -----------------------------
@@ -54,11 +54,11 @@ jobs:
           if pm2 list | grep -q "job-portal-server"; then
               pm2 reload job-portal-server --update-env
           else
-              pm2 start index.js --name job-portal-server --update-env
+              pm2 start server.js --name job-portal-server --update-env
           fi
 
           # -----------------------------
           # 7️⃣ Optional: view logs for verification
           # -----------------------------
-          pm2 logs job-portal-server --lines 10
+          pm2 save
           EOF
