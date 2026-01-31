@@ -1,8 +1,10 @@
 name: Job Portal Full Stack Deploy
 
 on:
-  push:
-    branches: ["main"]
+  workflow_run:
+    workflows: ["Job Portal Client CI", "Job Portal Server CI"]  # names of your CI workflows
+    types:
+      - completed
 
 jobs:
   deploy:
