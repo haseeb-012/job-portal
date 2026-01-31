@@ -21,7 +21,10 @@ connectDB()
 await connectCloudinary()
 
 // Middlewares
-const allowedOrigins = ['http://localhost:5173', 'https://ai-career-client.vercel.app']
+const allowedOrigins = [
+	'http://localhost:5173',
+	'https://jobsportal.haseebdevs.site',
+];
 app.use(cors({
   origin: function (origin, callback) {
     // allow requests with no origin 

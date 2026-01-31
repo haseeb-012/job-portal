@@ -1,0 +1,68 @@
+name: Job Portal Full Stack Deploy
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # -------------------------
+      # CHECKOUT
+      # -------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # -------------------------
+      # SETUP NODE
+      # -------------------------
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      # -------------------------
+      # SETUP SSH
+      # -------------------------
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      # -------------------------
+      # DOWNLOAD FRONTEND ARTIFACT
+      # -------------------------
+      - name: Download client build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: client-build
+          path: ./client/dist
+
+      # -------------------------
+      # DEPLOY FRONTEND
+      # -------------------------
+      - name: Deploy Frontend (rsync)
+        run: |
+          rsync -avz --delete ./client/dist/ \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/job-portal/client
+
+      # -------------------------
+      # DEPLOY BACKEND
+      # -------------------------
+      - name: Deploy Backend (git fetch + reset)
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            set -e
+            cd /var/www/job-portal/server
+      
+            git fetch origin
+            git reset --hard origin/main
+      
+            npm ci --production
+      
+            # Start or reload PM2
+            pm2 start index.js --name job-portal-server --update-env || pm2 reload job-portal-server --update-env
+          EOF
+      
