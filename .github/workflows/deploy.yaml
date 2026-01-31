@@ -30,31 +30,27 @@ jobs:
             set -x
 
             # -------------------------
-            # Load NVM
+            # Load NVM on VPS
             # -------------------------
             export NVM_DIR=\"$HOME/.nvm\"
             [ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\"
             [ -s \"$NVM_DIR/bash_completion\" ] && \. \"$NVM_DIR/bash_completion\"
 
-            NODE_BIN=\$NVM_DIR/versions/node/v22.22.0/bin/node
-            NPM_BIN=\$NVM_DIR/versions/node/v22.22.0/bin/npm
-            PM2_BIN=\$NVM_DIR/versions/node/v22.22.0/bin/pm2
-
             # -------------------------
             # Client (Frontend)
             # -------------------------
             cd /var/www/job-portal/client
-            \$NPM_BIN i
-            \$NPM_BIN run build
+            npm ci
+            npm run build
 
             # -------------------------
             # Server (Backend)
             # -------------------------
             cd /var/www/job-portal/server
-            \$NPM_BIN ci --production
+            npm ci --production
 
             # -------------------------
             # PM2 reload
             # -------------------------
-            \$PM2_BIN start index.js --name job-portal-server --update-env || \$PM2_BIN reload job-portal-server --update-env
+            pm2 start index.js --name job-portal-server --update-env || pm2 reload job-portal-server --update-env
           '"
