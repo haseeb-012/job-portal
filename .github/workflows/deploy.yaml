@@ -2,7 +2,7 @@ name: Job Portal Full Stack Deploy
 
 on:
   workflow_run:
-    workflows: ["Job Portal Client CI", "Job Portal Server CI"]
+    workflows: ['Job Portal Client CI', 'Job Portal Server CI']
     types:
       - completed
 
@@ -27,26 +27,26 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set -ex
-      
+
             #1️⃣ Source NVM
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-      
+
             # Debug Node/NPM
             node -v
             npm -v
             pm2 -v
-      
+
             # 2️⃣ Client (Frontend)
             cd /var/www/job-portal/client
             npm ci
             npm run build
-      
+
             # 3️⃣ Server (Backend)
             cd /var/www/job-portal/server
             npm ci --production
-      
+
             # 4️⃣ PM2 reload
             pm2 start  server.js --name job-portal-server --update-env || pm2 reload job-portal-server --update-env
             EOF
