@@ -13,7 +13,7 @@ jobs:
 
     steps:
       # -------------------------
-      # SETUP NODE ON RUNNER
+      # SETUP NODE ON RUNNER (optional, for any runner-side commands)
       # -------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -30,18 +30,13 @@ jobs:
           ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
 
       # -------------------------
-      # DEPLOY CLIENT + SERVER
+      # DEPLOY CLIENT + SERVER (robust with NVM)
       # -------------------------
       - name: Deploy Client + Server
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "bash -l -c '
             set -e
             set -x
-
-            # Load NVM on VPS
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
             # -------------------------
             # Client (Frontend)
@@ -60,4 +55,4 @@ jobs:
             # PM2 reload
             # -------------------------
             pm2 start index.js --name job-portal-server --update-env || pm2 reload job-portal-server --update-env
-          EOF
+          '"
