@@ -15,38 +15,50 @@ jobs:
       # -------------------------
       # SETUP SSH
       # -------------------------
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
-
-      # -------------------------
-      # DEPLOY CLIENT + SERVER
-      # -------------------------
-      - name: Deploy Client + Server
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        - name: Deploy Server
+          run: |
+            ssh deploy@${{ secrets.SERVER_HOST }} << 'EOF'
             set -ex
-
-            #1️⃣ Source NVM
+      
+            # -----------------------------
+            # 1️⃣ Source NVM (if using NVM)
+            # -----------------------------
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
-            # Debug Node/NPM
+      
+            # -----------------------------
+            # 2️⃣ Debug Node / PM2
+            # -----------------------------
             node -v
             npm -v
             pm2 -v
-
-            # 2️⃣ Client (Frontend)
-            cd /var/www/job-portal/client
-            npm ci
-            npm run build
-
-            # 3️⃣ Server (Backend)
+      
+            # -----------------------------
+            # 3️⃣ Navigate to server folder
+            # -----------------------------
             cd /var/www/job-portal/server
+      
+            # -----------------------------
+            # 4️⃣ Load environment variables
+            # -----------------------------
+            export $(grep -v '^#' .env | xargs)
+      
+            # -----------------------------
+            # 5️⃣ Install dependencies
+            # -----------------------------
             npm ci --production
-
-            # 4️⃣ PM2 reload
-            pm2 start  server.js --name job-portal-server --update-env || pm2 reload job-portal-server --update-env
+      
+            # -----------------------------
+            # 6️⃣ Start or reload PM2 process safely
+            # -----------------------------
+            if pm2 list | grep -q "job-portal-server"; then
+                pm2 reload job-portal-server --update-env
+            else
+                pm2 start index.js --name job-portal-server --update-env
+            fi
+      
+            # -----------------------------
+            # 7️⃣ Optional: view logs for verification
+            # -----------------------------
+            pm2 logs job-portal-server --lines 10
             EOF
