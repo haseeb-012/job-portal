@@ -12,6 +12,13 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 22 ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
       # -------------------------
       # SETUP SSH
       # -------------------------
@@ -19,7 +26,6 @@ jobs:
         run: |
           ssh -p 22 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           set -ex
-
           # -----------------------------
           # 1️⃣ Source NVM (if using NVM)
           # -----------------------------
