@@ -13,15 +13,6 @@ jobs:
 
     steps:
       # -------------------------
-      # SETUP NODE ON RUNNER (optional, for any runner-side commands)
-      # -------------------------
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.x
-          cache: npm
-
-      # -------------------------
       # SETUP SSH
       # -------------------------
       - name: Setup SSH
@@ -30,7 +21,7 @@ jobs:
           ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
 
       # -------------------------
-      # DEPLOY CLIENT + SERVER (robust with NVM)
+      # DEPLOY CLIENT + SERVER
       # -------------------------
       - name: Deploy Client + Server
         run: |
@@ -39,20 +30,27 @@ jobs:
             set -x
 
             # -------------------------
+            # Paths to Node, NPM, PM2 (from VPS NVM)
+            # -------------------------
+            NODE_BIN=$HOME/.nvm/versions/node/v22.22.0/bin/node
+            NPM_BIN=$HOME/.nvm/versions/node/v22.22.0/bin/npm
+            PM2_BIN=$HOME/.nvm/versions/node/v22.22.0/bin/pm2
+
+            # -------------------------
             # Client (Frontend)
             # -------------------------
             cd /var/www/job-portal/client
-            npm ci
-            npm run build
+            $NPM_BIN ci
+            $NPM_BIN run build
 
             # -------------------------
             # Server (Backend)
             # -------------------------
             cd /var/www/job-portal/server
-            npm ci --production
+            $NPM_BIN ci --production
 
             # -------------------------
             # PM2 reload
             # -------------------------
-            pm2 start index.js --name job-portal-server --update-env || pm2 reload job-portal-server --update-env
+            $PM2_BIN start index.js --name job-portal-server --update-env || $PM2_BIN reload job-portal-server --update-env
           '"
