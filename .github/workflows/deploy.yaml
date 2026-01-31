@@ -43,11 +43,7 @@ jobs:
           # 3️⃣ Navigate to server folder
           # -----------------------------
           cd /var/www/job-portal/server
-
-          # -----------------------------
-          # 4️⃣ Load environment variables
-          # -----------------------------
-          export $(grep -v '^#' .env | xargs)
+      
 
           # -----------------------------
           # 5️⃣ Install dependencies
