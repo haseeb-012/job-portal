@@ -15,50 +15,50 @@ jobs:
       # -------------------------
       # SETUP SSH
       # -------------------------
-        - name: Deploy Server
-          run: |
-            ssh deploy@${{ secrets.SERVER_HOST }} << 'EOF'
-            set -ex
-      
-            # -----------------------------
-            # 1️⃣ Source NVM (if using NVM)
-            # -----------------------------
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-      
-            # -----------------------------
-            # 2️⃣ Debug Node / PM2
-            # -----------------------------
-            node -v
-            npm -v
-            pm2 -v
-      
-            # -----------------------------
-            # 3️⃣ Navigate to server folder
-            # -----------------------------
-            cd /var/www/job-portal/server
-      
-            # -----------------------------
-            # 4️⃣ Load environment variables
-            # -----------------------------
-            export $(grep -v '^#' .env | xargs)
-      
-            # -----------------------------
-            # 5️⃣ Install dependencies
-            # -----------------------------
-            npm ci --production
-      
-            # -----------------------------
-            # 6️⃣ Start or reload PM2 process safely
-            # -----------------------------
-            if pm2 list | grep -q "job-portal-server"; then
-                pm2 reload job-portal-server --update-env
-            else
-                pm2 start index.js --name job-portal-server --update-env
-            fi
-      
-            # -----------------------------
-            # 7️⃣ Optional: view logs for verification
-            # -----------------------------
-            pm2 logs job-portal-server --lines 10
-            EOF
+      - name: Deploy Server
+        run: |
+          ssh -p 443 deploy@${{ secrets.SERVER_HOST }} << 'EOF'
+          set -ex
+
+          # -----------------------------
+          # 1️⃣ Source NVM (if using NVM)
+          # -----------------------------
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+          # -----------------------------
+          # 2️⃣ Debug Node / PM2
+          # -----------------------------
+          node -v
+          npm -v
+          pm2 -v
+
+          # -----------------------------
+          # 3️⃣ Navigate to server folder
+          # -----------------------------
+          cd /var/www/job-portal/server
+
+          # -----------------------------
+          # 4️⃣ Load environment variables
+          # -----------------------------
+          export $(grep -v '^#' .env | xargs)
+
+          # -----------------------------
+          # 5️⃣ Install dependencies
+          # -----------------------------
+          npm ci --production
+
+          # -----------------------------
+          # 6️⃣ Start or reload PM2 process safely
+          # -----------------------------
+          if pm2 list | grep -q "job-portal-server"; then
+              pm2 reload job-portal-server --update-env
+          else
+              pm2 start index.js --name job-portal-server --update-env
+          fi
+
+          # -----------------------------
+          # 7️⃣ Optional: view logs for verification
+          # -----------------------------
+          pm2 logs job-portal-server --lines 10
+          EOF
