@@ -82,7 +82,3 @@ jobs:
 
             echo "Starting containers with new images..."
             docker compose up -d
-
-            # Nginx config check (safe reload)
-            sudo nginx -t
-            sudo systemctl reload nginx
