@@ -1,66 +1,88 @@
-name: Job Portal Full Stack Deploy
+# Workflow name (GitHub Actions UI me show hota hai)
+name: CI/CD MERN with Docker Hub
 
+# Workflow kab run ho
 on:
-  workflow_run:
-    workflows: ['Job Portal Client CI', 'Job Portal Server CI']
-    types:
-      - completed
+  push:
+    branches:
+      - main   # sirf main branch pe push par trigger
 
 jobs:
-  deploy:
+  build-and-deploy:
+    # GitHub-hosted runner (Linux)
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      - name: Setup SSH
+      # -------------------------------------------------
+      # 1️⃣ Checkout source code from GitHub repository
+      # -------------------------------------------------
+      # CI ko code chahiye hota hai taake Docker image build ho sake
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # -------------------------------------------------
+      # 2️⃣ Login to Docker Hub
+      # -------------------------------------------------
+      # Docker Hub pe image push karne ke liye authentication zaroori
+      - name: Docker Hub Login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # -------------------------------------------------
+      # 3️⃣ Build & Push Backend Docker Image
+      # -------------------------------------------------
+      # Server folder se Dockerfile read hoti hai
+      # Image Docker Hub pe push hoti hai
+      - name: Build & Push Backend Image
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p 22 ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+          docker build \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/mern-backend:latest \
+            ./server
 
-      # -------------------------
-      # SETUP SSH
-      # -------------------------
-      - name: Deploy Server
+          docker push \
+            ${{ secrets.DOCKERHUB_USERNAME }}/mern-backend:latest
+
+      # -------------------------------------------------
+      # 4️⃣ Build & Push Frontend Docker Image (optional)
+      # -------------------------------------------------
+      # Agar frontend Dockerized hai to yeh step use hota hai
+      - name: Build & Push Frontend Image
         run: |
-          ssh -p 22 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-          set -ex
-          # -----------------------------
-          # 1️⃣ Source NVM (if using NVM)
-          # -----------------------------
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          docker build \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/mern-frontend:latest \
+            ./client
 
-          # -----------------------------
-          # 2️⃣ Debug Node / PM2
-          # -----------------------------
-          node -v
-          npm -v
-          pm2 -v
+          docker push \
+            ${{ secrets.DOCKERHUB_USERNAME }}/mern-frontend:latest
 
-          # -----------------------------
-          # 3️⃣ Navigate to server folder
-          # -----------------------------
-          cd /var/www/job-portal/server
-      
+      # -------------------------------------------------
+      # 5️⃣ Deploy on VPS (CD part)
+      # -------------------------------------------------
+      # VPS sirf image pull karega, build kabhi nahi
+      # Docker Compose se containers restart honge
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
 
-          # -----------------------------
-          # 5️⃣ Install dependencies
-          # -----------------------------
-          npm ci --production
+          script: |
+            # Project directory
+            cd /var/www/job-portal
 
-          # -----------------------------
-          # 6️⃣ Start or reload PM2 process safely
-          # -----------------------------
-          if pm2 list | grep -q "job-portal-server"; then
-              pm2 reload job-portal-server --update-env
-          else
-              pm2 start server.js --name job-portal-server --update-env
-          fi
+            echo "Pulling latest Docker images from Docker Hub..."
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/mern-backend:latest
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/mern-frontend:latest
 
-          # -----------------------------
-          # 7️⃣ Optional: view logs for verification
-          # -----------------------------
-          pm2 save
-          EOF
+            echo "Stopping existing containers..."
+            docker compose down
+
+            echo "Starting containers with new images..."
+            docker compose up -d
+
+            # Nginx config check (safe reload)
+            sudo nginx -t
+            sudo systemctl reload nginx

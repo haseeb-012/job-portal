@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  backend:
+    image: haseeb012/mern-backend:latest
+    container_name: mern-backend
+    restart: always
+    env_file:
+      - ./server/.env
+    ports:
+      - 5000:5000
+    networks:
+      - mern-net
+
+  frontend:
+    image: haseeb012/mern-frontend:latest
+    container_name: mern-frontend
+    restart: always
+    ports:
+      - 5173:80
+    networks:
+      - mern-net
+
+networks:
+  mern-net:
+    driver: bridge
