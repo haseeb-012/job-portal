@@ -5,7 +5,7 @@ name: CI/CD MERN with Docker Hub
 on:
   push:
     branches:
-      - main   # sirf main branch pe push par trigger
+      - main # sirf main branch pe push par trigger
 
 jobs:
   build-and-deploy:
@@ -51,11 +51,12 @@ jobs:
       - name: Build & Push Frontend Image
         run: |
           docker build \
-            -t ${{ secrets.DOCKERHUB_USERNAME }}/mern-frontend:latest \
-            ./client
+          --build-arg VITE_CLERK_PUBLISHABLE_KEY=${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }} \
+          --build-arg VITE_BACKEND_URL=${{ secrets.VITE_BACKEND_URL }} \
+          -t ${{ secrets.DOCKERHUB_USERNAME }}/mern-frontend:latest \
+          ./client
 
-          docker push \
-            ${{ secrets.DOCKERHUB_USERNAME }}/mern-frontend:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/mern-frontend:latest
 
       # -------------------------------------------------
       # 5️⃣ Deploy on VPS (CD part)
