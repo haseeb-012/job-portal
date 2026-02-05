@@ -1,5 +1,4 @@
 version: '3.9'
-
 services:
   backend:
     image: haseeb012/mern-backend:latest
@@ -11,6 +10,9 @@ services:
       - '127.0.0.1:5000:5000'
     networks:
       - mern-net
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
 
   frontend:
     image: haseeb012/mern-frontend:latest
