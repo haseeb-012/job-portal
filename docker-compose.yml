@@ -1,4 +1,4 @@
-version: "3.9"
+version: '3.9'
 
 services:
   backend:
@@ -6,7 +6,7 @@ services:
     container_name: mern-backend
     restart: always
     env_file:
-      - ./server/.env
+      - .env
     ports:
       - 5000:5000
     networks:
@@ -16,6 +16,8 @@ services:
     image: haseeb012/mern-frontend:latest
     container_name: mern-frontend
     restart: always
+    env_file:
+      - .env
     ports:
       - 5173:80
     networks:
