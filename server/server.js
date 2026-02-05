@@ -24,6 +24,7 @@ await connectCloudinary()
 const allowedOrigins = [
 	'http://localhost:5173',
 	'https://jobsportal.haseebdevs.site',
+	'https://www.jobsportal.haseebdevs.site',
 ];
 app.use(cors({
   origin: function (origin, callback) {
